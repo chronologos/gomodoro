@@ -34,10 +34,10 @@ type pomodoro struct {
 	stateSeq    [4]pomodoroState
 }
 
-func (p *pomodoro) pStateTransition(sd statsDisplay) { // mutates pStateIdx in place
+func (p *pomodoro) stateTx() { // mutates pStateIdx in place
 	debugDisplay.updateText([]string{nameStateMap[p.stateSeq[p.pStateIdx]]})
-	statsGlobal[p.stateSeq[p.pStateIdx]]++
-	sd.refreshStatsDisplay()
+	stats[p.stateSeq[p.pStateIdx]]++
+	ui.SendCustomEvt("/gomodoro/sdupdate", statsDisplayUpdate{})
 	if p.pStateIdx >= cap(p.stateSeq)-1 {
 		p.pStateIdx = 0
 	} else {
@@ -45,7 +45,13 @@ func (p *pomodoro) pStateTransition(sd statsDisplay) { // mutates pStateIdx in p
 	}
 }
 
-func makePomodoro(sd statsDisplay) *pomodoro {
+func (p *pomodoro) reset() {
+	p.t = 0
+	p.gauge.Percent = int(float64(p.maxDuration-p.t) / float64(p.maxDuration) * 100)
+	p.gauge.BorderLabel = fmt.Sprintf("Time Elapsed: %s", p.t.String())
+}
+
+func makePomodoro() *pomodoro {
 	g := ui.NewGauge()
 	g.Percent = 100 // updated periodically
 	g.Width = 50
@@ -65,7 +71,7 @@ func makePomodoro(sd statsDisplay) *pomodoro {
 		g.Percent = int(float64(p.maxDuration-p.t) / float64(p.maxDuration) * 100)
 		g.BorderLabel = fmt.Sprintf("Duration %s || Elapsed: %s || pState: %d", p.maxDuration, p.t.String(), p.stateSeq[p.pStateIdx])
 		if p.t >= p.maxDuration {
-			p.pStateTransition(sd)
+			p.stateTx()
 			p.tState = paused
 			p.t = 0
 			p.maxDuration = *timeMap[p.stateSeq[p.pStateIdx]]
@@ -73,17 +79,5 @@ func makePomodoro(sd statsDisplay) *pomodoro {
 		}
 
 	})
-	// TODO(iantay) create functions to call from main.go
-	// g.Handle("/sys/kbd/s", func(ui.Event) {
-	// 	p.tState = started
-	// })
-	// g.Handle("/sys/kbd/p", func(ui.Event) {
-	// 	p.tState = paused
-	// })
-	// g.Handle("/sys/kbd/r", func(ui.Event) {
-	// 	p.t = 0
-	// 	g.Percent = int(float64(p.maxDuration-p.t) / float64(p.maxDuration) * 100)
-	// 	g.BorderLabel = fmt.Sprintf("Time Elapsed: %s", p.t.String())
-	// })
 	return &p
 }

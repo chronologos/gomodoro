@@ -11,13 +11,15 @@ type statsDisplay struct {
 	barChart *ui.BarChart
 }
 
+type statsDisplayUpdate struct{}
+
 func makeStatsDisplay() (sd *statsDisplay) {
 	sd = new(statsDisplay)
 	bc := ui.NewBarChart()
 	sd.barChart = bc
 	var names []string
 	var vals []int
-	for name, val := range statsGlobal {
+	for name, val := range stats {
 		names = append(names, nameStateMap[name])
 		vals = append(vals, val)
 	}
@@ -33,10 +35,11 @@ func makeStatsDisplay() (sd *statsDisplay) {
 	return
 }
 
-func (sd *statsDisplay) refreshStatsDisplay() {
+func (sd *statsDisplay) refreshStatsDisplay(e ui.Event) {
+	// sdu := e.Data.(statsDisplayUpdate)
 	var names []string
 	var vals []int
-	for name, val := range statsGlobal {
+	for name, val := range stats {
 		names = append(names, nameStateMap[name])
 		vals = append(vals, val)
 	}
