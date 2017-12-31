@@ -36,7 +36,7 @@ func readStats() {
 }
 
 func writeStats(ps pomodoroState, l time.Duration, num int) {
-	record := []string{time.Now().Format("Jan 2 15:04:05 MST 2006"), nameStateMap[ps], l.String(), strconv.Itoa(num)}
+	record := []string{time.Now().Format("Jan 2 15:04:05 MST 2006"), stateInfoMap[ps].shortName, l.String(), strconv.Itoa(num)}
 	for _, r := range record {
 		fmt.Print(r + " ")
 	}

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/0xAX/notificator"
 	ui "github.com/gizak/termui"
 )
 
@@ -34,8 +35,15 @@ type pomodoro struct {
 	stateSeq    [4]pomodoroState
 }
 
-func (p *pomodoro) stateTx() { // mutates pStateIdx in place
-	debugDisplay.updateText([]string{nameStateMap[p.stateSeq[p.pStateIdx]]})
+// We view pomodoro as n-state fsm, with states defined in main.go.
+// This transitions the pomodoro state and performs side-effects.
+func (p *pomodoro) stateTx() {
+	stateName := stateInfoMap[p.stateSeq[p.pStateIdx]].longName
+	title := fmt.Sprintf("%s Complete", stateName)
+	text := stateInfoMap[p.stateSeq[p.pStateIdx]].completionMsg
+	notify.Push(title, text, "gomodoro-small.png", notificator.UR_CRITICAL)
+	fmt.Println("\a") // \a is the bell literal.
+	debugDisplay.updateText([]string{stateInfoMap[p.stateSeq[p.pStateIdx]].shortName})
 	stats[p.stateSeq[p.pStateIdx]]++
 	ui.SendCustomEvt("/gomodoro/sdupdate", statsDisplayUpdate{})
 	if p.pStateIdx >= cap(p.stateSeq)-1 {
@@ -43,6 +51,7 @@ func (p *pomodoro) stateTx() { // mutates pStateIdx in place
 	} else {
 		p.pStateIdx++
 	}
+	// newStateName := nameStateMap[p.stateSeq[p.pStateIdx]]
 }
 
 func (p *pomodoro) reset() {
@@ -51,12 +60,12 @@ func (p *pomodoro) reset() {
 	p.gauge.BorderLabel = fmt.Sprintf("Time Elapsed: %s", p.t.String())
 }
 
-func makePomodoro() *pomodoro {
+func makePomodoro(x, y, w, h int) *pomodoro {
 	g := ui.NewGauge()
-	g.Percent = 100 // updated periodically
-	g.Width = 50
-	g.Height = 3
-	g.Y = 7
+	g.X = x
+	g.Y = y
+	g.Width = w
+	g.Height = h
 	g.BorderLabel = "Duration || Elapsed: || pState: " // updated periodically
 	g.BarColor = ui.ColorRed
 	g.BorderFg = ui.ColorWhite
@@ -74,7 +83,7 @@ func makePomodoro() *pomodoro {
 			p.stateTx()
 			p.tState = paused
 			p.t = 0
-			p.maxDuration = *timeMap[p.stateSeq[p.pStateIdx]]
+			p.maxDuration = stateInfoMap[p.stateSeq[p.pStateIdx]].period
 			return
 		}
 
