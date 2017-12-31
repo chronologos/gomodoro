@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/chronologos/gomodoro/master/gomodoro_monster.png"><br><br>
+  <img src="https://raw.githubusercontent.com/chronologos/gomodoro/master/gomodoro_monster.jpg"><br><br>
 </div>
 # Gomodoro
 Dashboard-style,Terminal-based Pomodoro timer. Uses `gizak/termui` for dashboard.
