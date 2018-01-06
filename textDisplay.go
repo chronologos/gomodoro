@@ -4,7 +4,7 @@ import (
 	ui "github.com/gizak/termui"
 )
 
-// TODO(iantay) I am encapsulating ui.List so we can define methods on it. Is this correct?
+// TODO(chronologos) I am encapsulating ui.List so we can define methods on it. Is this correct?
 type mutableTextBox struct {
 	list *ui.List
 }

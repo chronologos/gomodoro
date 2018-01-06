@@ -16,16 +16,23 @@ func defineHandlers(p *pomodoro, sd *statsDisplay) {
 		p.reset()
 	})
 
+	ui.Handle("/sys/kbd/n", func(ui.Event) {
+		p.nextState()
+		p.maxDuration = stateInfoMap[p.stateSeq[p.pStateIdx]].period
+		p.render()
+	})
+
 	ui.Handle("/sys/kbd/q", func(ui.Event) {
 		ui.StopLoop()
 	})
 
 	ui.Handle("/sys/kbd/v", func(ui.Event) {
-		writeStats(0, time.Second*5, 5)
+		writeStat(0, time.Second*5, 5)
 	})
 
-	ui.Handle("/sys/kbd/c", func(ui.Event) {
+	ui.Handle("/sys/kbd/c", func(e ui.Event) {
 		readStats()
+		sd.refreshStatsDisplay(e)
 	})
 
 	ui.Handle("/gomodoro/sdupdate", sd.refreshStatsDisplay)

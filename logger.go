@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"encoding/csv"
-	"fmt"
 	"io"
 	"log"
 	"os"
@@ -11,9 +10,18 @@ import (
 	"time"
 )
 
+// logger functions log and read pomodoro stats from a file, specified by the flag statsFileName.
+
 func check(e error) {
 	if e != nil {
 		panic(e)
+	}
+}
+
+// checkD is Debug-only version of check()
+func checkD(e error) {
+	if e != nil {
+		log.Print(e.Error)
 	}
 }
 
@@ -28,33 +36,30 @@ func isToday(t time.Time) bool {
 	return true
 }
 
-func loadStats(r *csv.Reader) (v statsDisplayT) {
+func allDates(t time.Time) bool {
+	return true
+}
+
+type dateChecker func(time.Time) bool
+
+func genericLoadStats(r *csv.Reader, f dateChecker) {
 	for {
 		record, err := r.Read()
 		if err == io.EOF {
 			break
 		}
-		if err != nil {
-			log.Fatal(err)
-		}
-		// fmt.Printf("%d\n", len(record))
+		checkD(err)
 		var state pomodoroState
 		var stateCount int
 		for i, x := range record {
-			fmt.Println(x)
 			switch i {
 			case 0:
-				// Mon Jan 2 15:04:05 -0700 MST 2006
 				d, err := time.Parse("Jan 2 15:04:05 2006", x)
-				if err != nil {
-					fmt.Print(err)
-					fmt.Print(" gg ")
-				}
+				checkD(err)
 				// Only load stats from today
-				if isToday(d) {
+				if !isToday(d) {
 					continue
 				}
-
 			case 1:
 				state, err = stateInfoMap.findShortName(x)
 				if err != nil {
@@ -70,42 +75,40 @@ func loadStats(r *csv.Reader) (v statsDisplayT) {
 			}
 		}
 		stats[state] += stateCount
-		fmt.Println("---")
-		// fmt.Println(record)
 	}
-	v = make(statsDisplayT)
-	return v
 }
 
-// statsTracker reads and writes stats to a file.
+func loadStats(r *csv.Reader) {
+	genericLoadStats(r, isToday)
+}
+
+// readStats() reads from file into stats variable.
 func readStats() {
 	f, err := os.Open(*statFileName)
 	defer f.Close()
-	if err != nil {
-		fmt.Println(err)
-	}
+	checkD(err)
 	r := csv.NewReader(bufio.NewReader(f))
 	r.FieldsPerRecord = 4
-	stats = loadStats(r)
+	loadStats(r)
 }
 
-func writeStats(ps pomodoroState, l time.Duration, num int) {
+// writeStats() writes from stats variable into file.
+// TODO(chronologos) currently the whole file is read into memory
+func writeStats() {
+	return
+}
+func writeStat(ps pomodoroState, l time.Duration, num int) {
 	record := []string{time.Now().Format("Jan 2 15:04:05 2006"), stateInfoMap[ps].shortName, l.String(), strconv.Itoa(num)}
-	for _, r := range record {
-		fmt.Print(r + " ")
-	}
+	//for _, r := range record {
+	//fmt.Print(r + " ")
+	//}
 	f, err := os.OpenFile(*statFileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	defer f.Close()
-	if err != nil {
-		fmt.Println(err)
-	}
+	checkD(err)
 	w := csv.NewWriter(f)
 	err = w.Write(record)
-	if err != nil {
-		fmt.Println(err)
-	}
+	checkD(err)
 	w.Flush()
 	err = w.Error()
-	check(err)
-	fmt.Print("stats written...")
+	checkD(err)
 }
