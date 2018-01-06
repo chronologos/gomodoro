@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"time"
 
@@ -9,10 +10,7 @@ import (
 )
 
 var notify *notificator.Notificator
-var workPeriod = flag.Duration("work", 10*time.Second, "work period")
-var shortRestPeriod = flag.Duration("rest", 5*time.Second, "rest period")
-var longRestPeriod = flag.Duration("long_rest", 6*time.Second, "long rest period")
-var statFileName = flag.String("stats_file", "stats.csv", "name of csv file in which stats should be/are tracked")
+
 var stats = statsDisplayT{
 	work:      0,
 	shortRest: 0,
@@ -32,7 +30,19 @@ type stateStrings struct {
 	period        time.Duration
 }
 
-var stateInfoMap = map[pomodoroState]stateStrings{
+type stateInfoMapT map[pomodoroState]stateStrings
+
+// find searches for exact matches in
+func (s stateInfoMapT) findShortName(sn string) (pomodoroState, error) {
+	for k, v := range s {
+		if v.shortName == sn {
+			return k, nil
+		}
+	}
+	return work, errors.New("Not found.")
+}
+
+var stateInfoMap = stateInfoMapT{
 	work:      stateStrings{"Pomodoro", "p", "Go take a break!", time.Second},
 	shortRest: stateStrings{"Short rest", "sr", "Get back to work!", time.Second},
 	longRest:  stateStrings{"Long rest", "lr", "Get back to work!", time.Second},
@@ -60,44 +70,21 @@ func main() {
 		panic(err)
 	}
 	defer ui.Close()
+
 	sd := makeStatsDisplay(51, 0, 16, 10)
 	p := makePomodoro(0, 7, 50, 3)
-	helpStrs := []string{"[s] start timer", "[p] pause timer", "[r] reset timer"}
+	helpStrs := []string{"[s] start", "[p] pause", "[r] reset"}
 	mtb := makeTextBox(0, 2, 25, 5, "help")
 	mtb.updateText(helpStrs)
+
 	draw := func() {
 		ui.Render(p.gauge, mtb.list, sd.barChart, debugDisplay.list)
 	}
-
-	ui.Handle("/sys/kbd/s", func(ui.Event) {
-		p.tState = started
-	})
-
-	ui.Handle("/sys/kbd/p", func(ui.Event) {
-		p.tState = paused
-	})
-
-	ui.Handle("/sys/kbd/r", func(ui.Event) {
-		p.reset()
-	})
-
-	ui.Handle("/sys/kbd/q", func(ui.Event) {
-		ui.StopLoop()
-	})
-
-	ui.Handle("/sys/kbd/v", func(ui.Event) {
-		writeStats(0, time.Second*5, 5)
-	})
-
-	ui.Handle("/sys/kbd/c", func(ui.Event) {
-		readStats()
-	})
 
 	ui.Handle("/timer/1s", func(e ui.Event) {
 		draw()
 	})
 
-	ui.Handle("/gomodoro/sdupdate", sd.refreshStatsDisplay)
-
+	defineHandlers(p, sd)
 	ui.Loop()
 }

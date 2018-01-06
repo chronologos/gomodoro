@@ -17,14 +17,15 @@ Dashboard-style, terminal-based Pomodoro timer. Inspired by [this article](http:
 ## Usage
 
 ## TODO
-- audio/notification-based alerts on completion of pomodoros
-- fix frontend (align elements)
 - log to file (read)
+- implement best error handling practices
+- fix frontend (align elements)
 - show advanced stats
   - average number of pomodoros per day of week
   - (???)
+- ~~audio/notification-based alerts on completion of pomodoros~~
 - ~~flags for default durations~~
 - ~~log to file (write)~~
 - ~~show pomodoros completed~~
 - ~~show stats in Dashboard~~
-- Tests(?)
+- tests(?)

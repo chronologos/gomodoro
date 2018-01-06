@@ -53,6 +53,13 @@ func (p *pomodoro) stateTx() {
 	}
 	// newStateName := nameStateMap[p.stateSeq[p.pStateIdx]]
 }
+func (p *pomodoro) start() {
+	p.tState = started
+}
+
+func (p *pomodoro) pause() {
+	p.tState = paused
+}
 
 func (p *pomodoro) reset() {
 	p.t = 0
